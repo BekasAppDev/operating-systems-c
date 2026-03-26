@@ -10,7 +10,7 @@
 
 #define P 4
 
-volatile sig_atomic_t active_children = 0;
+int active_children = 0;
 
 /* SIGINT handler */
 void sighandler(int signum)
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
     if (argc != 4)
     {
-        const char *err = "Usage: program <input_file> <output_file> <character>\n";
+        const char *err = "Usage: ./a1.3-comm <input_file> <output_file> <character>\n";
         write(2, err, strlen(err));
         return -1;
     }
@@ -152,17 +152,11 @@ int main(int argc, char *argv[])
                     close(pipes[j][0]);
             }
 
-            int local_fd = open(argv[1], O_RDONLY);
-            if (local_fd == -1)
-                exit(1);
-
             off_t chunk_size = (file_size + P - 1) / P;
             off_t start = i * chunk_size;
             off_t end = start + chunk_size;
             if (end > file_size)
                 end = file_size;
-
-            lseek(local_fd, start, SEEK_SET);
 
             kill(getppid(), SIGUSR1);
 
@@ -174,30 +168,35 @@ int main(int argc, char *argv[])
             size_t total_read = 0;
             size_t to_read = end - start;
 
+            off_t current_offset = start;
+
             for (;;)
             {
-                rcnt = read(local_fd, buff, sizeof(buff));
+                size_t remaining = to_read - total_read;
+                size_t chunk = remaining < sizeof(buff) ? remaining : sizeof(buff);
+
+                rcnt = pread(fpr, buff, chunk, current_offset);
+
                 if (rcnt == 0)
                     break;
                 if (rcnt == -1)
                 {
                     const char *err = "Error reading input file in child\n";
                     write(2, err, strlen(err));
-                    close(local_fd);
                     close(pipes[i][1]);
                     exit(1);
                 }
-                if (total_read + rcnt > to_read)
-                    rcnt = to_read - total_read;
+
                 for (ssize_t idx = 0; idx < rcnt; idx++)
                     if (buff[idx] == c2c)
                         count++;
+
                 total_read += rcnt;
+                current_offset += rcnt;
+
                 if (total_read >= to_read)
                     break;
             }
-
-            close(local_fd);
 
             kill(getppid(), SIGUSR2);
 
