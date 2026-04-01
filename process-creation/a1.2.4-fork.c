@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     }
     else if (p == 0)
     {
-        char *args[] = {"./al.1-system_calls", argv[1], argv[2], argv[3], NULL};
+        char *args[] = {"./a1.1-system_calls", argv[1], argv[2], argv[3], NULL};
         execv(args[0], args);
         perror("execv");
         exit(1);
