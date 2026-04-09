@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +53,7 @@ int main(int argc, char *argv[])
         /* parent => frontend */
         close(pipe_from_disp[1]);
 
-        /* Set stdin (fd 0) to non-blocking mode using fcntl */
+        /* set stdin to non-blocking mode using fcntl */
         int flags = fcntl(0, F_GETFL, 0);
         fcntl(0, F_SETFL, flags | O_NONBLOCK);
 
@@ -62,9 +63,6 @@ int main(int argc, char *argv[])
         /* non-blocking state of frontend */
         while (1)
         {
-            const char *msg = "frontend> ";
-            write(1, msg, strlen(msg));
-
             /* read user command */
             ssize_t n = read(0, cmd, CMD_BUF - 1);
             if (n > 0)
@@ -135,8 +133,6 @@ int main(int argc, char *argv[])
                 }
                 break;
             }
-
-            usleep(2000);
         }
     }
 

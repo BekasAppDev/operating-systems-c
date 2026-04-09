@@ -1,7 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
-
 #include <sys/types.h>
+#include "config.h"
 
 typedef enum
 {
@@ -24,8 +24,11 @@ typedef struct
     int busy;
     int last_task_idx;
     int active;
+    char read_buf[MSG_SIZE + 1];
+    ssize_t read_bytes;
 } Worker;
 
+/* utility functions */
 int string_to_int(char *s);
 void int_to_padded_string(int num, char *str, int pad_len);
 
